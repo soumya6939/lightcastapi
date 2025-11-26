@@ -1,6 +1,7 @@
 const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const { apiReference } = require('@scalar/express-api-reference');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -40,6 +41,20 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// OpenAPI JSON endpoint (required by Scalar and other tools)
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// Scalar API Reference documentation (with interactive "Try it out" feature)
+app.use('/scalar', apiReference({
+  theme: 'purple',
+  spec: {
+    content: swaggerSpec,
+  },
+}));
 
 // Routes
 const lightcastRoutes = require('./routes/lightcastRoutes');
@@ -98,7 +113,10 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to LightCast API',
-    documentation: `http://localhost:${PORT}/api-docs`,
+    documentation: {
+      swagger: `http://localhost:${PORT}/api-docs`,
+      scalar: `http://localhost:${PORT}/scalar`,
+    },
     endpoints: {
       skills: '/api/lightcast/skills',
       extract: '/api/lightcast/extract',
@@ -128,6 +146,7 @@ app.use((req, res) => {
 app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
+  console.log(`Scalar API Reference available at http://localhost:${PORT}/scalar`);
   
   // Connect to LightCast (non-blocking, server will start even if connection fails)
   try {
