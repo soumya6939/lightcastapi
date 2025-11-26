@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const { apiReference } = require('@scalar/express-api-reference');
+const path = require('path');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -55,6 +56,36 @@ app.use('/scalar', apiReference({
     content: swaggerSpec,
   },
 }));
+
+// RapiDoc documentation (with interactive "Try it out" feature)
+app.get('/rapidoc', (req, res) => {
+  const html = `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>LightCast API - RapiDoc</title>
+    <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+  </head>
+  <body>
+    <rapi-doc
+      spec-url="/api-docs.json"
+      theme="light"
+      render-style="read"
+      show-header="true"
+      allow-try="true"
+      show-info="true"
+      show-components="true"
+      show-models="true"
+      schema-expansion-level="2"
+      default-schema-tab="example"
+      primary-color="#6c5ce7"
+    ></rapi-doc>
+  </body>
+</html>
+  `;
+  res.send(html);
+});
 
 // Routes
 const lightcastRoutes = require('./routes/lightcastRoutes');
@@ -116,6 +147,7 @@ app.get('/', (req, res) => {
     documentation: {
       swagger: `http://localhost:${PORT}/api-docs`,
       scalar: `http://localhost:${PORT}/scalar`,
+      rapidoc: `http://localhost:${PORT}/rapidoc`,
     },
     endpoints: {
       skills: '/api/lightcast/skills',
@@ -147,6 +179,7 @@ app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
   console.log(`Scalar API Reference available at http://localhost:${PORT}/scalar`);
+  console.log(`RapiDoc documentation available at http://localhost:${PORT}/rapidoc`);
   
   // Connect to LightCast (non-blocking, server will start even if connection fails)
   try {
